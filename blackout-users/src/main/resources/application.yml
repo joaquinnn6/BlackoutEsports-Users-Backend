@@ -1,0 +1,25 @@
+server:
+  port: ${SERVER_PORT:8083}
+spring:
+  application:
+    name: blackout-users
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5435}/${DB_NAME:users_db}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+app:
+  cors:
+    allowed-origins: ${CORS_ORIGINS:http://localhost:5173,http://localhost:3000,http://localhost:3001}
+  security:
+    entra-issuer: ${ENTRA_ISSUER:}
+    entra-audience: ${ENTRA_AUDIENCE:}
+    entra-scope: ${ENTRA_SCOPE:access_as_user}
+    cognito-issuer: ${COGNITO_ISSUER:}
+    cognito-client-id: ${COGNITO_CLIENT_ID:}
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
