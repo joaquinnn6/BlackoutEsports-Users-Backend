@@ -1,5 +1,10 @@
 package cl.duocuc.blackout.users;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import cl.duocuc.blackout.users.messaging.TournamentCreatedEvent;
+import cl.duocuc.blackout.users.notification.FanNotificationRepository;
+import cl.duocuc.blackout.users.notification.FanNotificationService;
+import java.time.Instant;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,9 +25,14 @@ class CrudApiTests {
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper mapper;
     @Autowired UserRepository repository;
+    @Autowired FanNotificationRepository notificationRepository;
+    @Autowired FanNotificationService notificationService;
     static final String BASE = "/api/users";
     static final String BODY = "{\"cognitoSub\":\"fan-1\",\"displayName\":\"Fan\",\"favoriteTeam\":\"Blackout\"}";
-    @BeforeEach void clear() { repository.deleteAll(); }
+    @BeforeEach void clear() {
+        notificationRepository.deleteAll();
+        repository.deleteAll();
+    }
     private long create() throws Exception {
         var result = mvc.perform(post(BASE).header("Authorization", "Bearer " + TestTokens.admin())
             .contentType(MediaType.APPLICATION_JSON).content(BODY))
@@ -101,5 +111,23 @@ class CrudApiTests {
         mvc.perform(put(BASE + "/" + id).header("Authorization", "Bearer " + TestTokens.admin())
             .contentType(MediaType.APPLICATION_JSON).content(BODY.replace("fan-1", "fan-2")))
             .andExpect(status().isConflict());
+    }
+
+    @Test void fanPuedeConsultarNotificacionesGeneradasPorEventos() throws Exception {
+        var event = new TournamentCreatedEvent(
+            UUID.randomUUID(), "tournament.created", Instant.parse("2026-10-25T12:00:00Z"),
+            "blackout-tournaments",
+            new TournamentCreatedEvent.TournamentData(
+                10L, "Copa Nacional", "Valorant", "Programado", "25 OCT 2026", "16 equipos"));
+        notificationService.registerTournamentCreated(event);
+
+        mvc.perform(get("/api/notifications")
+            .header("Authorization", "Bearer " + TestTokens.fan()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$[0].eventType").value("tournament.created"))
+            .andExpect(jsonPath("$[0].title").value("Nuevo torneo: Copa Nacional"))
+            .andExpect(jsonPath("$[0].audience").value("ALL_FANS"));
+
+        mvc.perform(get("/api/notifications")).andExpect(status().isUnauthorized());
     }
 }

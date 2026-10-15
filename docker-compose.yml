@@ -31,8 +31,20 @@ services:
       COGNITO_ISSUER: ${COGNITO_ISSUER:-}
       COGNITO_CLIENT_ID: ${COGNITO_CLIENT_ID:-}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://localhost:3000,http://localhost:3001}
+      RABBITMQ_ENABLED: ${RABBITMQ_ENABLED:-true}
+      RABBITMQ_HOST: ${RABBITMQ_HOST:-blackout-rabbitmq}
+      RABBITMQ_PORT: ${RABBITMQ_PORT:-5672}
+      RABBITMQ_USER: ${RABBITMQ_USER:-blackout}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:?Define RABBITMQ_PASSWORD en .env}
     depends_on:
       db:
         condition: service_healthy
+    networks:
+      - default
+      - blackout-network
 volumes:
   users_data:
+networks:
+  blackout-network:
+    external: true
+    name: blackout-network

@@ -8,6 +8,8 @@ spring:
     hibernate:
       ddl-auto: create-drop
 app:
+  rabbit:
+    enabled: false
   security:
     entra-issuer: https://login.microsoftonline.com/test-tenant/v2.0
     entra-audience: test-api

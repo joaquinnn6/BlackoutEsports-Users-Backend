@@ -8,6 +8,24 @@ Puerto local: **8083**. Base de datos: **users_db**, puerto **5435**.
 Guarda perfiles de fans: identidad Cognito (`cognitoSub`), nombre visible y equipo favorito.
 El identificador de Cognito es único e inmutable. No guarda contraseñas, no emite tokens y no crea cuentas en Cognito.
 El staff crea, actualiza y elimina los perfiles de la aplicación; Cognito administra la cuenta de acceso por separado.
+
+También consume eventos `tournament.created` desde `fan.notifications.queue` y guarda una
+notificación con audiencia `ALL_FANS`. Los fans autenticados pueden consultarlas mediante
+`GET /api/notifications`.
+
+## Confirmación, reintentos y DLQ
+
+`FanNotificationConsumer` utiliza confirmación manual:
+
+- Procesamiento correcto: envía ACK después de guardar la notificación.
+- Error temporal: republica el mensaje con `x-blackout-retry-count` y confirma el original.
+- Error después de tres intentos: envía NACK sin reencolar; RabbitMQ lo mueve a
+  `fan.notifications.dlq` mediante `blackout.dead-letter.exchange`.
+- Error al republicar: envía NACK con reencolado para evitar perder el mensaje.
+
+El `eventId` es único en base de datos, por lo que un mensaje repetido no genera notificaciones
+duplicadas. Todos los nombres de RabbitMQ se encuentran centralizados en `application.yml` y
+`RabbitMessagingProperties`.
 Eliminar un perfil no elimina la cuenta Cognito. No existe autorregistro ni escritura para fans en este servicio.
 
 ## Permisos y autenticación

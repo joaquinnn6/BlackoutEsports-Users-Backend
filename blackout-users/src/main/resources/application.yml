@@ -11,6 +11,11 @@ spring:
     hibernate:
       ddl-auto: update
     open-in-view: false
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:blackout}
+    password: ${RABBITMQ_PASSWORD:blackout-local}
 app:
   cors:
     allowed-origins: ${CORS_ORIGINS:http://localhost:5173,http://localhost:3000,http://localhost:3001}
@@ -20,6 +25,18 @@ app:
     entra-scope: ${ENTRA_SCOPE:access_as_user}
     cognito-issuer: ${COGNITO_ISSUER:}
     cognito-client-id: ${COGNITO_CLIENT_ID:}
+  rabbit:
+    enabled: ${RABBITMQ_ENABLED:true}
+    events-exchange: blackout.events.exchange
+    dead-letter-exchange: blackout.dead-letter.exchange
+    queues:
+      fan-notifications: fan.notifications.queue
+      fan-notifications-dlq: fan.notifications.dlq
+    routing:
+      fan-notifications: tournament.#
+      fan-notifications-dlq: fan.notifications.failed
+      tournament-created: tournament.created
+    max-retries: 3
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
