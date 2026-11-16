@@ -11,7 +11,20 @@ spring:
     hibernate:
       ddl-auto: update
     open-in-view: false
+  mail:
+    properties:
+      mail.smtp:
+        auth: true
+        starttls.enable: true
+        starttls.required: true
+        connectiontimeout: 5000
+        timeout: 10000
+        writetimeout: 10000
   rabbitmq:
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
     host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}
     username: ${RABBITMQ_USER:blackout}
@@ -40,3 +53,8 @@ app:
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
+
+academy:
+  cognito-userinfo-url: ${ACADEMY_COGNITO_USERINFO_URL:}
+  mail-consumer-enabled: ${ACADEMY_MAIL_CONSUMER_ENABLED:false}
+  mail-from: ${ACADEMY_MAIL_FROM:}
