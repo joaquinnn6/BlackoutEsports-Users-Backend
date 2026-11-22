@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class FanNotificationController {
     private final FanNotificationService service;
 
-    @GetMapping
+    @GetMapping({"", "/staff"})
     public List<FanNotificationResponse> findAll() {
         return service.findAll();
     }

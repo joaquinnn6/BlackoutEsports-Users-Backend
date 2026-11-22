@@ -67,7 +67,8 @@ public class AcademyMessaging {
 
     @Bean
     SimpleRabbitListenerContainerFactory academyListenerFactory(SimpleRabbitListenerContainerFactoryConfigurer configurer,
-            ConnectionFactory connection, MessageConverter converter, AcademyMailService mail) {
+            ConnectionFactory connection, MessageConverter converter,
+            org.springframework.beans.factory.ObjectProvider<AcademyMailService> mail) {
         var factory = new SimpleRabbitListenerContainerFactory();
         configurer.configure(factory, connection);
         factory.setMessageConverter(converter);
@@ -78,7 +79,7 @@ public class AcademyMessaging {
                     log.error("Correo Academy agotó tres intentos; rechazo hacia {}. MessageId={}",
                         FAILED_QUEUE, message.getMessageProperties().getMessageId(), cause);
                     try {
-                        if (converter.fromMessage(message) instanceof DecisionEvent event) mail.markFailed(event.applicationId());
+                        if (converter.fromMessage(message) instanceof DecisionEvent event) mail.getObject().markFailed(event.applicationId());
                     } finally {
                         new RejectAndDontRequeueRecoverer().recover(message, cause);
                     }

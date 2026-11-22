@@ -36,5 +36,9 @@ class AcademyAuditTests {
             .andExpect(status().isForbidden());
         mvc.perform(get("/api/academy/applications/audit").header("Authorization","Bearer "+TestTokens.staff()))
             .andExpect(status().isOk());
+        mvc.perform(get("/api/notifications/staff").header("Authorization","Bearer "+TestTokens.fan()))
+            .andExpect(status().isForbidden());
+        mvc.perform(get("/api/notifications/staff").header("Authorization","Bearer "+TestTokens.staff()))
+            .andExpect(status().isOk());
     }
 }

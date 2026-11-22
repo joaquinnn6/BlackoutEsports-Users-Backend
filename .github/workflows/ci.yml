@@ -47,6 +47,6 @@ jobs:
       - name: Logs y limpieza del entorno desechable
         if: always()
         run: |
-          docker compose -f rabbit-infra/docker-compose.cluster.yml logs --tail=30
+          docker compose -f rabbit-infra/docker-compose.cluster.yml logs --tail=250
           docker compose -f docker-compose.mail-test.yml down
           docker compose -f rabbit-infra/docker-compose.cluster.yml down -v

@@ -47,6 +47,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/academy/me").hasRole("Fan")
                 .requestMatchers("/api/academy/applications", "/api/academy/applications/**").hasAnyRole("Admin", "Staff")
                 .requestMatchers(HttpMethod.GET, "/api/users/me").hasRole("Fan")
+                .requestMatchers("/api/notifications/staff").hasAnyRole("Admin", "Staff")
                 .requestMatchers(HttpMethod.GET, "/api/notifications", "/api/notifications/**")
                     .hasAnyRole("Fan", "Admin", "Staff")
                 .requestMatchers("/api/users", "/api/users/**").hasAnyRole("Admin", "Staff")
