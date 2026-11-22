@@ -48,6 +48,7 @@ public class FanNotificationConsumer {
 
         if (currentAttempt < properties.maxRetries()) {
             try {
+                var confirmation=new org.springframework.amqp.rabbit.connection.CorrelationData();
                 rabbitTemplate.convertAndSend(
                         properties.eventsExchange(),
                         properties.routing().tournamentCreated(),
@@ -55,11 +56,14 @@ public class FanNotificationConsumer {
                         outgoing -> {
                             outgoing.getMessageProperties().setHeader(RETRY_HEADER, currentAttempt);
                             return outgoing;
-                        });
+                        }, confirmation);
+                if(!confirmation.getFuture().get(5,java.util.concurrent.TimeUnit.SECONDS).isAck() || confirmation.getReturned()!=null)
+                    throw new AmqpException("RabbitMQ no confirmó el reintento");
                 channel.basicAck(deliveryTag, false);
                 log.warn("Evento {} reenviado; intento {} de {}", event.eventId(), currentAttempt + 1,
                         properties.maxRetries(), exception);
-            } catch (AmqpException publishException) {
+            } catch (Exception publishException) {
+                if(publishException instanceof InterruptedException) Thread.currentThread().interrupt();
                 channel.basicNack(deliveryTag, false, true);
                 log.error("No fue posible reenviar el evento {}; se devuelve a la cola", event.eventId(),
                         publishException);

@@ -20,3 +20,33 @@ jobs:
           java-version: '21'
           cache: maven
       - run: mvn -B verify
+  rabbit-integration:
+    runs-on: ubuntu-latest
+    env:
+      RABBITMQ_PASSWORD: ci-only-password
+      RABBITMQ_ERLANG_COOKIE: ci-only-cluster-cookie
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: joaquinnn6/BlackoutEsports-RabbitAdmin-Backend
+          ref: feature-entrega-final
+          path: rabbit-infra
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Levantar RabbitMQ y buzón SMTP de prueba
+        run: |
+          docker compose -f rabbit-infra/docker-compose.cluster.yml up -d --wait --wait-timeout 180 rabbit1 rabbit2
+          python3 rabbit-infra/scripts/check_cluster.py
+          docker compose -f docker-compose.mail-test.yml up -d
+      - name: Probar tres colas, tres DLQ y entrega SMTP
+        run: mvn -B -ntp -f blackout-users/pom.xml -Dtest=RabbitClusterTests -Drabbit.integration=true test
+      - name: Logs y limpieza del entorno desechable
+        if: always()
+        run: |
+          docker compose -f rabbit-infra/docker-compose.cluster.yml logs --tail=30
+          docker compose -f docker-compose.mail-test.yml down
+          docker compose -f rabbit-infra/docker-compose.cluster.yml down -v

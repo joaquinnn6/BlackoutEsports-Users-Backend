@@ -41,6 +41,7 @@ services:
       SPRING_MAIL_PASSWORD: ${SPRING_MAIL_PASSWORD:-}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://localhost:3000,http://localhost:3001}
       RABBITMQ_ENABLED: ${RABBITMQ_ENABLED:-true}
+      RABBITMQ_ADDRESSES: ${RABBITMQ_ADDRESSES:-blackout-rabbitmq:5672}
       RABBITMQ_HOST: ${RABBITMQ_HOST:-blackout-rabbitmq}
       RABBITMQ_PORT: ${RABBITMQ_PORT:-5672}
       RABBITMQ_USER: ${RABBITMQ_USER:-blackout}

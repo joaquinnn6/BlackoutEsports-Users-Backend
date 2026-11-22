@@ -14,7 +14,7 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 
 @TestConfiguration
-class TestTokens {
+public class TestTokens {
     static final String ENTRA = "https://login.microsoftonline.com/test-tenant/v2.0";
     static final String COGNITO = "https://cognito-idp.us-east-1.amazonaws.com/test-pool";
     static final SecurityProperties PROPERTIES = new SecurityProperties(ENTRA, "test-api",
@@ -47,6 +47,6 @@ class TestTokens {
         return jwt.serialize();
     }
     static String admin() throws JOSEException { return signed(claims(ENTRA)); }
-    static String staff() throws JOSEException { return signed(claims(ENTRA).claim("roles", List.of("Staff"))); }
-    static String fan() throws JOSEException { return signed(claims(COGNITO)); }
+    public static String staff() throws JOSEException { return signed(claims(ENTRA).claim("roles", List.of("Staff"))); }
+    public static String fan() throws JOSEException { return signed(claims(COGNITO)); }
 }

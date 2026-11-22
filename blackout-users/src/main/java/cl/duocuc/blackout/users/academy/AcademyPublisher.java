@@ -30,7 +30,10 @@ public class AcademyPublisher {
         var application = pending.get();
         var confirmation = new CorrelationData();
         rabbit.convertAndSend(exchange.getName(), AcademyMessaging.routingKey(application.decision),
-                new AcademyMessaging.DecisionEvent(application.id), confirmation);
+                new AcademyMessaging.DecisionEvent(application.id), message -> {
+                    message.getMessageProperties().setMessageId(application.id.toString());
+                    return message;
+                }, confirmation);
         if (!confirmation.getFuture().get(5, TimeUnit.SECONDS).isAck() || confirmation.getReturned() != null)
             throw new IllegalStateException("RabbitMQ no confirmó el enrutamiento de la decisión");
         application.pendingPublication = false;

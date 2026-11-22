@@ -5,6 +5,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.doAnswer;
+import org.springframework.amqp.rabbit.connection.CorrelationData;
 
 import cl.duocuc.blackout.users.notification.FanNotificationService;
 import com.rabbitmq.client.Channel;
@@ -36,6 +38,11 @@ class FanNotificationConsumerTest {
                 new RabbitMessagingProperties.Queues("fan.notifications.queue", "fan.notifications.dlq"),
                 new RabbitMessagingProperties.Routing("tournament.#", "fan.notifications.failed", "tournament.created"),
                 3);
+        doAnswer(invocation -> {
+            CorrelationData confirmation=invocation.getArgument(4);
+            confirmation.getFuture().complete(new CorrelationData.Confirm(true,null));
+            return null;
+        }).when(rabbitTemplate).convertAndSend(any(String.class),any(String.class),any(Object.class),any(MessagePostProcessor.class),any(CorrelationData.class));
         consumer = new FanNotificationConsumer(service, rabbitTemplate, properties);
         event = new TournamentCreatedEvent(
                 UUID.randomUUID(),
@@ -67,7 +74,7 @@ class FanNotificationConsumerTest {
                 eq("blackout.events.exchange"),
                 eq("tournament.created"),
                 eq(event),
-                any(MessagePostProcessor.class));
+                any(MessagePostProcessor.class), any(CorrelationData.class));
         verify(channel).basicAck(22L, false);
     }
 
@@ -79,6 +86,19 @@ class FanNotificationConsumerTest {
         consumer.consume(event, message, channel);
 
         verify(channel).basicNack(23L, false, false);
+    }
+
+    @Test
+    void conservaOriginalCuandoElBrokerRechazaLaRepublicacion() throws Exception {
+        doThrow(new IllegalStateException("fallo temporal")).when(service).registerTournamentCreated(event);
+        doAnswer(invocation -> {
+            CorrelationData confirmation=invocation.getArgument(4);
+            confirmation.getFuture().complete(new CorrelationData.Confirm(false,"nack"));
+            return null;
+        }).when(rabbitTemplate).convertAndSend(any(String.class),any(String.class),any(Object.class),any(MessagePostProcessor.class),any(CorrelationData.class));
+        consumer.consume(event,message(24L,0),channel);
+        verify(channel).basicNack(24L,false,true);
+        org.mockito.Mockito.verify(channel,org.mockito.Mockito.never()).basicAck(24L,false);
     }
 
     private static Message message(long deliveryTag, int retries) {

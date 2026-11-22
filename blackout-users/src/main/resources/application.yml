@@ -21,6 +21,7 @@ spring:
         timeout: 10000
         writetimeout: 10000
   rabbitmq:
+    addresses: ${RABBITMQ_ADDRESSES:${RABBITMQ_HOST:localhost}:${RABBITMQ_PORT:5672}}
     publisher-confirm-type: correlated
     publisher-returns: true
     template:
